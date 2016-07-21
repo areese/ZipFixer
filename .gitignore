@@ -1,0 +1,12 @@
+*.jar
+.classpath
+.settings
+.project
+build/
+bin/
+test-output/
+.idea
+/.gradle
+/gradle
+test_project/.gradle/
+test_project/gradle/

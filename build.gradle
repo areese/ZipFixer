@@ -1,0 +1,83 @@
+// Copyright 2016 Yahoo Inc.
+// Licensed under the terms of the New-BSD license. Please see LICENSE file in the project root for terms.
+plugins {
+  id "com.gradle.build-scan" version "1.0"
+}
+
+buildScan { licenseAgreementUrl = 'https://gradle.com/terms-of-service'; licenseAgree = 'yes' }
+
+group = 'com.yahoo.gradle'
+version = '1.0.0-SNAPSHOT'
+
+apply plugin: 'groovy'
+apply plugin: 'maven'
+apply plugin: 'jacoco'
+apply plugin: 'java-gradle-plugin'
+
+sourceCompatibility = 1.8
+targetCompatibility = 1.8
+
+repositories {
+    mavenCentral()
+    mavenLocal()
+    jcenter()
+}
+
+dependencies {
+    compile gradleApi()
+
+    testCompile 'junit:junit:4.12'
+    testCompile 'org.testng:testng:6.8.5'
+    testCompile 'org.mockito:mockito-core:2.0.76-beta'
+}
+
+test {
+    // enable TestNG support (default is JUnit)
+    useTestNG()
+    maxHeapSize = "512m"
+
+    jacoco {
+        append = true
+        destinationFile = file("$buildDir/jacoco/jacocoTest.exec")
+        classDumpFile = file("$buildDir/jacoco/classpathdumps")
+    }
+}
+
+jacoco {
+    toolVersion = "0.7.6.201602180812"
+}
+
+jacocoTestReport {
+    reports {
+        xml.enabled = true
+        html.enabled = true
+    }
+}
+
+check.dependsOn jacocoTestReport
+
+jar {
+    manifest {
+        attributes(
+            "Main-Class": 'com.yahoo.gradle.ZipFixer',
+        )
+    }
+}
+
+task fatJar(type: Jar) {
+  manifest.from jar.manifest
+  classifier = 'all'
+  from {
+    configurations.runtime.collect { it.isDirectory() ? it : zipTree(it) }
+  } {
+        exclude "META-INF/*.SF"
+        exclude "META-INF/*.DSA"
+        exclude "META-INF/*.RSA"
+        exclude "org/bouncycastle/**"
+  }
+  with jar
+}
+
+artifacts {
+    archives fatJar
+}
